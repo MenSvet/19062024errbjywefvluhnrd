@@ -60,33 +60,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const paymentStatus = document.getElementById('paymentStatus').value;
 
         if (productImage) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const newOrder = {
-                    id: orderId,
-                    customerName,
-                    supplierName,
-                    orderDate,
-                    dueDate,
-                    productDetails,
-                    productImage: event.target.result,
-                    paymentDate,
-                    comment,
-                    productionStatus,
-                    paymentStatus
-                };
+            const formData = new FormData();
+            formData.append('productImage', productImage);
 
-                const existingOrderIndex = orders.findIndex(order => order.id === orderId);
-                if (existingOrderIndex > -1) {
-                    orders[existingOrderIndex] = newOrder;
+            fetch('upload.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const newOrder = {
+                        id: orderId,
+                        customerName,
+                        supplierName,
+                        orderDate,
+                        dueDate,
+                        productDetails,
+                        productImage: data.path,
+                        paymentDate,
+                        comment,
+                        productionStatus,
+                        paymentStatus
+                    };
+
+                    const existingOrderIndex = orders.findIndex(order => order.id === orderId);
+                    if (existingOrderIndex > -1) {
+                        orders[existingOrderIndex] = newOrder;
+                    } else {
+                        orders.push(newOrder);
+                    }
+                    orders.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                    localStorage.setItem('orders', JSON.stringify(orders));
+                    window.location.href = 'index.html';
                 } else {
-                    orders.push(newOrder);
+                    alert('Ошибка загрузки изображения: ' + data.message);
                 }
-                orders.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-                localStorage.setItem('orders', JSON.stringify(orders));
-                window.location.href = 'index.html';
-            };
-            reader.readAsDataURL(productImage);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка загрузки изображения: ' + error.message);
+            });
         } else {
             const newOrder = {
                 id: orderId,
@@ -123,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="py-2 px-4 border-b">${order.customerName}</td>
                 <td class="py-2 px-4 border-b">${order.supplierName}</td>
                 <td class="py-2 px-4 border-b">${order.orderDate}</td>
-                <td class="py-2 px-4 border-b">${order.dueDate}</td>
+                <td class="py-2 px-4 border-б">${order.dueDate}</td>
                 <td class="py-2 px-4 border-б">
                     ${order.productDetails}
                     ${order.productImage ? `<img src="${order.productImage}" alt="product image" class="w-16 h-16 cursor-pointer" onclick="showImageModal('${order.productImage}')">` : ''}
