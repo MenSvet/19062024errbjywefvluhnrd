@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('productImage', productImage);
 
-            fetch('upload.php', {
+            fetch('upload.php', { // Убедитесь, что путь правильный
                 method: 'POST',
                 body: formData
             })
